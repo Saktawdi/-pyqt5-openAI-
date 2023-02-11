@@ -7,6 +7,10 @@ qmut_1 = QMutex()
 
 
 class AiThread(QThread):
+    # 记忆存储
+    localMsg = ""
+    localRes = ""
+
     msg = ""
     res = ""
     finishSignal = pyqtSignal(str)
@@ -26,26 +30,34 @@ class AiThread(QThread):
 
         else:
             qmut_1.lock()
-            openai.api_key = "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"
+            openai.api_key = "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"
 
-            model_engine = "text-davinci-002"
-            prompt = self.msg
+            model_engine = "text-davinci-003"
+            prompt = self.localMsg
 
             completion = openai.Completion.create(
                 engine=model_engine,
                 prompt=prompt,
                 max_tokens=1024,
                 n=1,
-                stop=None,
+                stop=None,  # 停止符
+                # stop=['\n'],
                 temperature=0.5,
             )
             self.res = completion.choices[0].text.strip()
-            print(self.res)
+            print('AI:', self.res)
+            # 存储每次答案
+            self.localRes = self.localRes + self.res + '\n'
+            # 存储记录
+            self.localMsg = self.localMsg + self.res + '\n'
             qmut_1.unlock()
             self.finishSignal.emit(self.res)
 
     def setMsg(self, msg):
         self.msg = msg
+
+    def appendLocalMsg(self, msg):
+        self.localMsg = self.localMsg + msg + '\n'
 
     def getRes(self):
         return self.res
